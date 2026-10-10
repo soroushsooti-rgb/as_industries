@@ -1,0 +1,7 @@
+"""App metadata. Assets and website routes belong only to this app."""
+app_name = "as_industries"
+app_title = "AS Industries"
+app_publisher = "SHN"
+app_description = "Independent AS Industries website"
+app_email = ""
+app_license = "Proprietary"
