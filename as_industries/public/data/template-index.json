@@ -496,5 +496,11 @@
     "javascript": "js/as/10-application.js",
     "owner": "shell",
     "slots": 7
+  },
+  "as/10-application/profilePage": {
+    "file": "templates/as/10-application/profilePage.html",
+    "javascript": "js/as/10-application.js",
+    "owner": "profilePage",
+    "slots": 7
   }
 }

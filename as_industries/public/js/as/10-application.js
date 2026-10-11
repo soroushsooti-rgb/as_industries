@@ -176,7 +176,7 @@
           .map(([url, en, fa]) => a(url, t(en, fa)))
           .join(""),
       ),
-      window.SHN_TEMPLATES.text(a("/account", t("Sign in", "ورود"), "account-link")),
+      window.SHN_TEMPLATES.text(a("/account", t("Sign in", "ورود"), "account-link") + a("/profile", t("Profile", "پروفایل"), "account-link")),
       window.SHN_TEMPLATES.text(
         path.startsWith("/shop") || path === "/nixa"
           ? a("/shop/pets", "PET KEYCHAINS", "button primary header-quote")
@@ -208,14 +208,14 @@
       window.SHN_TEMPLATES.text(t("Sign in or create an account", "ورود یا ایجاد حساب")),
       window.SHN_TEMPLATES.text(
         t(
-          "Choose a sign-in option. Google and email accounts need secure sign-in service setup before they can be used.",
-          "روش ورود را انتخاب کنید. ورود با گوگل و ایمیل پس از راه‌اندازی سرویس امن ورود قابل‌استفاده خواهد بود.",
+          "One account for AS Industries and AS Shop. Choose how to sign in.",
+          "یک حساب مشترک برای AS Industries و AS Shop. روش ورود را انتخاب کنید.",
         ),
       ),
       window.SHN_TEMPLATES.text(t("Your account", "حساب شما")),
       window.SHN_TEMPLATES.text(t("Continue with Google", "ادامه با گوگل")),
       window.SHN_TEMPLATES.text(
-        t("Sign in / create account with email", "ورود یا ثبت‌نام با ایمیل"),
+        t("Sign in with username and password", "ورود با نام کاربری و رمز"),
       ),
       window.SHN_TEMPLATES.text(
         t(
@@ -274,6 +274,17 @@
               ),
             ]),
       ),
+    ]);
+  }
+  function profilePage() {
+    return window.SHN_TEMPLATES.render("as/10-application/profilePage", [
+      t("Your profile", "پروفایل شما"),
+      t("Manage your shared AS Industries and AS Shop account.", "مدیریت حساب مشترک AS Industries و AS Shop."),
+      t("Account details", "اطلاعات حساب"),
+      t("Loading your profile…", "در حال دریافت پروفایل…"),
+      t("Our websites", "بخش‌های AS"),
+      t("Go to AS Shop", "رفتن به فروشگاه AS"),
+      t("Go to AS Industries", "رفتن به AS Industries"),
     ]);
   }
   /** bindAccount: application feature. Keep related handlers in this module. */
@@ -342,6 +353,7 @@
     else if (path === "/contact" || path === "/consultation") html = intake("contact");
     else if (path === "/nixa") html = petShop();
     else if (path === "/account") html = accountPage();
+    else if (path === "/profile") html = profilePage();
     else if (path === "/shop") html = shopLanding();
     else if (path === "/shop/basket") html = ecoBasketPage();
     else if (path === "/shop/pets") html = petShop();
@@ -2381,7 +2393,8 @@
   }
   /** bind: application feature. Keep related handlers in this module. */
   function bind() {
-    if ($("#adminLogin") || $("#adminRates")) bindAccount();
+    if ($("#profileCard")) window.AS_ACCOUNT?.mount($("#profileCard"), t, escape);
+    else if ($("#adminLogin") || $("#adminRates")) bindAccount();
     if ($("[data-making]")) dispose = ASMotion();
     if ($("#hero3d")) bindHero();
     if ($("[data-workspace]")) bindWorkspace($("[data-workspace]").dataset.workspace);
@@ -5761,6 +5774,11 @@
         window.SHN_TEMPLATES.text(t("Save delivery settings", "ذخیرهٔ تنظیمات ارسال")),
       ])
     );
+  };
+  const beforeSharedAccountBind = bindAccount;
+  bindAccount = function () {
+    beforeSharedAccountBind();
+    window.AS_ACCOUNT?.mount(document.querySelector(".account-card"), t, escape);
   };
   const beforeInquiryBindAccount = bindAccount;
   bindAccount = function () {
