@@ -2079,27 +2079,14 @@
             }
           });
         }
-        const csrfToken = (window.frappe && frappe.csrf_token) || (document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : "");
-        const response = await fetch(
-          "/api/method/as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Frappe-CSRF-Token": csrfToken
-            },
-            credentials: "same-origin",
-            body: JSON.stringify(payload),
-          },
-        );
-        const data = await response.json();
+        frappe.call({
+          method: "as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request",
+          args: payload,
+          callback: function(r) {
+            console.log("Response:", r);
+          }
+        });
 
-        if (!response.ok || !data.message?.success) {
-          throw new Error(
-            data.message?.message ||
-              t("Could not submit the repair request.", "ثبت درخواست تعمیر ممکن نشد."),
-          );
-        }
 
         toast(data.message.message);
       } catch (error) {
