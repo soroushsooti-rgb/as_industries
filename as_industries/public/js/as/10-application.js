@@ -2079,12 +2079,14 @@
             }
           });
         }
-        frappe.call({
-          method: "as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request",
-          args: payload,
-          callback: function(r) {
-            console.log("Response:", r);
-          }
+        frappe.ready(function() {
+          frappe.call({
+            method: "as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request",
+            args: payload,
+            callback: function(r) {
+              console.log("Response:", r);
+            }
+          });
         });
 
 
