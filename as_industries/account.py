@@ -353,12 +353,15 @@ def change_password(old_password, new_password):
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limit(limit=20, seconds=600)
-def google_url():
+def google_url(return_route=None):
     from frappe.utils.oauth import get_oauth2_authorize_url
     provider = _google_provider()
     if not provider:
         frappe.throw("Google sign-in is not configured yet.")
-    return {"url": get_oauth2_authorize_url(provider, ACCOUNT_ROUTE)}
+    redirect=ACCOUNT_ROUTE
+    if isinstance(return_route,str) and re.match(r"^/(checkout|orders|tickets)(\?|$)",return_route) and len(return_route)<1000:
+        redirect="/as-industries#"+return_route
+    return {"url": get_oauth2_authorize_url(provider, redirect)}
 
 
 PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024

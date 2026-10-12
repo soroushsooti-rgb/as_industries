@@ -335,6 +335,20 @@
       "/";
     if ((window.CONNECTED_SITE === "shop" || window.AS_SITE === "shop") && path === "/")
       path = "/shop";
+    if (window.AS_TICKETS?.owns(path)) {
+      shell();
+      window.AS_TICKETS.mount($("#app"));
+      chatWidget();
+      window.refreshLocalization?.();
+      return;
+    }
+    if (window.AS_COMMERCE?.owns(path)) {
+      shell();
+      window.AS_COMMERCE.mount(path, $("#app"));
+      chatWidget();
+      window.refreshLocalization?.();
+      return;
+    }
     shell();
     let html;
     if (path === "/") html = home();
@@ -5706,13 +5720,13 @@
       window.SHN_TEMPLATES.text(t("Close", "بستن")),
       window.SHN_TEMPLATES.text(
         t(
-          "Describe your request. Add your contact details so the team can reply.",
-          "درخواستتان را بنویسید و اطلاعات تماس را وارد کنید تا تیم ما پاسخ دهد.",
+          "Sign in to send a message. Replies are saved in your profile.",
+          "با حساب خود پیام دهید؛ پاسخ تیم در پروفایل شما ذخیره می‌شود.",
         ),
       ),
       window.SHN_TEMPLATES.text(t("Message", "پیام")),
       window.SHN_TEMPLATES.text(t("What do you need?", "چه کاری می‌خواهید انجام دهیم؟")),
-      window.SHN_TEMPLATES.text(contactFields("chat")),
+      window.SHN_TEMPLATES.text(""),
       window.SHN_TEMPLATES.text(t("Send to the team", "ارسال به تیم")),
     ]);
     document.body.append(toggle, panel);
@@ -5734,6 +5748,10 @@
   /** bindInquiryForm: application feature. Keep related handlers in this module. */
   function bindInquiryForm(form, status, kind) {
     if (!form) return;
+    if (kind === "chat") {
+      window.AS_TICKETS.bindMessage(form, status);
+      return;
+    }
     form.onsubmit = async (e) => {
       e.preventDefault();
       if (!form.reportValidity()) return;
@@ -5971,6 +5989,10 @@
   }
   bindInquiryForm = function (form, status, kind) {
     if (!form) return;
+    if (kind === "chat") {
+      window.AS_TICKETS.bindMessage(form, status);
+      return;
+    }
     const input = form.querySelector("[name=photo]"),
       preview = form.querySelector("#quick-photo-preview"),
       photoStatus = form.querySelector("#quick-photo-status");

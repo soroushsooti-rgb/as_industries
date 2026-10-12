@@ -41,6 +41,9 @@
     machines:[t("Machines","دستگاه‌ها"),"machines"],
     materials:[t("Materials","مواد اولیه"),"materials"],
     inventory:[t("Inventory","موجودی و محصولات"),"inventory"],
+    orders:[t("Orders","سفارش‌ها"),"inventory"],
+    tickets:[t("Support tickets","تیکت‌های پشتیبانی"),"requests"],
+    payments:[t("Payment gateway","درگاه پرداخت"),"quality"],
     quality:[t("Quality Control","کنترل کیفیت"),"quality"],
     reports:[t("Reports","گزارش‌ها"),"reports"],
     users:[t("Users","کاربران"),"users"],
@@ -111,7 +114,7 @@
     }
     document.getElementById("admin-search").addEventListener("input", e=>{
       query=e.target.value.trim().toLowerCase();start=0;
-      clearTimeout(searchTimer);searchTimer=setTimeout(()=>current==="inventory"?window.AS_INVENTORY.search(query):render(),250);
+      clearTimeout(searchTimer);searchTimer=setTimeout(()=>current==="inventory"?window.AS_INVENTORY.search(query):current==="orders"?window.AS_ADMIN_ORDERS.search(query):current==="tickets"?window.AS_TICKETS.search(query):render(),250);
     });
     document.getElementById("admin-logout").addEventListener("click",async e=>{
       e.currentTarget.disabled=true;
@@ -231,6 +234,8 @@
       let html;
       if(current==="dashboard")html=dashboardView();
       else if(current==="inventory")html=inventoryView();
+      else if(["orders","payments"].includes(current))html='<section id="admin-orders-panel"></section>';
+      else if(current==="tickets")html='<section id="admin-tickets-panel"></section>';
       else if(current==="settings")html=settingsView();
       else if(current==="reports")html=reportsView();
       else{
@@ -240,7 +245,9 @@
         html=current==="users"?usersTable(payload):collectionView(current,payload);
       }
       view.innerHTML=html;
+      if(current==="tickets")window.AS_TICKETS.mountAdmin(document.getElementById("admin-tickets-panel"));
       if(current==="inventory")window.AS_INVENTORY.mount(document.getElementById("inventory-panel"),{language:boot.language,shopURL:boot.urls.shop});
+      if(["orders","payments"].includes(current))window.AS_ADMIN_ORDERS.mount(document.getElementById("admin-orders-panel"),{section:current,language:boot.language,shopURL:boot.urls.shop});
       if(data.request_data.limited && current==="dashboard")setStatus(t("Statistics cover the latest 1,000 requests.","آمار مربوط به آخرین ۱۰۰۰ درخواست است."));
       document.getElementById("previous-page")?.addEventListener("click",()=>{start=Math.max(0,start-25);render();});
       document.getElementById("next-page")?.addEventListener("click",()=>{start+=25;render();});
@@ -255,7 +262,7 @@
     const candidate=location.hash.replace(/^#\/?/,"").split("?")[0];
     current=sections[candidate]?candidate:"dashboard";
     start=0;query="";const input=document.getElementById("admin-search");if(input)input.value="";
-    input.disabled=["settings","reports"].includes(current);
+    input.disabled=["settings","reports","payments"].includes(current);
     render();
   }
   document.addEventListener("keydown",e=>{

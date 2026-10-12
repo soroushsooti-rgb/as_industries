@@ -70,7 +70,11 @@
       otpButton.textContent = t("Sign in with SMS code", "ورود با کد پیامکی");
       passwordButton.after(otpButton);
     }
-    const requestedMode = new URLSearchParams((location.hash.split("?")[1] || "")).get("mode");
+    const accountParams = new URLSearchParams((location.hash.split("?")[1] || ""));
+    const requestedMode = accountParams.get("mode");
+    const requestedReturn = accountParams.get("return") || "";
+    const returnRoute = /^\/(checkout|orders|tickets)(\?|$)/.test(requestedReturn) ? requestedReturn : "";
+    const signedInDestination = returnRoute ? "#" + returnRoute : "#/profile";
     const initialMode = ({otp: "login", password: "password", signup: "signup", reset: "reset"})[requestedMode] || "password";
     let slot = card.querySelector("#accountForm");
     if (!slot) {
@@ -148,7 +152,7 @@
         (u.creation ? row("user",t("Account created","\u0633\u0627\u062e\u062a \u062d\u0633\u0627\u0628"),t("Your shared AS account was created.","\u062d\u0633\u0627\u0628 \u0645\u0634\u062a\u0631\u06a9 AS \u0634\u0645\u0627 \u0633\u0627\u062e\u062a\u0647 \u0634\u062f."),u.creation) : "");
       const readonly = (en,fa,value) => '<label class="field">' + t(en,fa) + '<input value="' + escape(value) + '" readonly></label>';
       return '<div class="profile-layout"><aside class="profile-sidebar"><div class="profile-brand">' + (brand ? brand.outerHTML : '<a href="#/">AS Industries</a>') + '</div><nav aria-label="' + t("Account navigation","\u0645\u0646\u0648\u06cc \u062d\u0633\u0627\u0628") + '">' +
-        nav("#/profile","user","Profile","\u067e\u0631\u0648\u0641\u0627\u06cc\u0644",true) + (state.can_admin ? nav("/as-admin?lang=" + document.documentElement.lang,"grid","Admin panel","پنل مدیریت") : "") + nav("#/shop","shop","AS Shop","\u0641\u0631\u0648\u0634\u06af\u0627\u0647 AS") + nav("#/services","grid","Services","\u062e\u062f\u0645\u0627\u062a") +
+        nav("#/profile","user","Profile","\u067e\u0631\u0648\u0641\u0627\u06cc\u0644",true) + nav("#/orders","shop","My orders","سفارش‌های من") + nav("#/tickets","grid","My tickets","تیکت‌های من") + (state.can_admin ? nav("/as-admin?lang=" + document.documentElement.lang,"grid","Admin panel","پنل مدیریت") : "") + nav("#/shop","shop","AS Shop","\u0641\u0631\u0648\u0634\u06af\u0627\u0647 AS") + nav("#/services","grid","Services","\u062e\u062f\u0645\u0627\u062a") +
         button("security", icon("lock") + " Account security", icon("lock") + " امنیت حساب", "profile-nav-button") +
         button("logout", icon("arrow") + " Sign out",icon("arrow") + " \u062e\u0631\u0648\u062c","profile-nav-button") +
         '</nav><div class="profile-sidebar-footer"><span class="profile-online"></span>' + t("One account. All of AS.","\u06cc\u06a9 \u062d\u0633\u0627\u0628\u060c \u062a\u0645\u0627\u0645 \u0628\u062e\u0634\u200c\u0647\u0627\u06cc AS.") + '<p>AS Industries \u00b7 AS Shop</p></div></aside>' +
@@ -188,7 +192,7 @@
       card.querySelector(profilePage ? ":scope > h2" : "h2").textContent = t(...(headings[mode] || headings.password));
       if (mode === "profile") {
         const u = state.user;
-        if (profilePage) slot.innerHTML = profileDashboard(u);
+        if (profilePage) { slot.innerHTML = profileDashboard(u); window.AS_COMMERCE?.mountProfile(slot.querySelector(".profile-main")); window.AS_TICKETS?.mountProfile(slot.querySelector(".profile-main")); }
         else {
         slot.innerHTML = '<p>' + escape(u.username || ((u.email || "").endsWith("@as-account.invalid") ? u.mobile_no : u.email)) + '</p><p>' + escape(u.mobile_no || "") + '</p>' +
           form("profile", field("first_name", "First name", "نام", "text", u.first_name || "", 'maxlength="140" autocomplete="given-name"') +
@@ -234,7 +238,7 @@
       if (!card.isConnected) return;
       state = result; csrf = result.csrf_token || "";
       if (profilePage && !result.user) { location.replace("#/account?mode=password"); return; }
-      if (!profilePage && result.user) { location.replace("#/profile"); return; }
+      if (!profilePage && result.user) { location.replace(signedInDestination); return; }
       show(profilePage ? "profile" : initialMode);
       if (result.user || initialMode === "password" || (initialMode === "signup" && !result.signup_requires_otp) || result.sms_ready)
         say(t("One account for AS Industries and AS Shop.", "یک حساب مشترک برای AS Industries و AS Shop."));
@@ -327,7 +331,7 @@
           });
         }
         csrf = state.csrf_token || "";
-        if (!profilePage && state.user) { location.replace("#/profile"); return; }
+        if (!profilePage && state.user) { location.replace(signedInDestination); return; }
         show(); say(t("Saved successfully.", "با موفقیت انجام شد."));
       });
     });
@@ -344,7 +348,7 @@
       else resetMode(action);
     });
     if (google) google.onclick = () => run(async () => {
-      const result = await api(method("google_url"));
+      const result = await api(method("google_url"), {return_route: returnRoute});
       location.assign(result.url);
     });
     if (passwordButton) passwordButton.onclick = () => { if (!busy) resetMode("password"); };

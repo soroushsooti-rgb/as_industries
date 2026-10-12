@@ -1,0 +1,94 @@
+{
+  "doctype": "DocType",
+  "name": "AS Support Ticket",
+  "module": "AS Industries",
+  "custom": 0,
+  "engine": "InnoDB",
+  "autoname": "format:AS-TKT-{YYYY}-{#####}",
+  "title_field": "subject",
+  "track_changes": 1,
+  "field_order": [
+    "customer",
+    "customer_name",
+    "subject",
+    "status",
+    "source",
+    "last_message_at",
+    "last_sender",
+    "request_key"
+  ],
+  "fields": [
+    {
+      "fieldname": "customer",
+      "fieldtype": "Link",
+      "label": "Customer User ID",
+      "options": "User",
+      "reqd": 1,
+      "read_only": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "customer_name",
+      "fieldtype": "Data",
+      "label": "Customer Name",
+      "read_only": 1
+    },
+    {
+      "fieldname": "subject",
+      "fieldtype": "Data",
+      "label": "Subject",
+      "reqd": 1,
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Open\nAwaiting Customer\nClosed",
+      "default": "Open",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "source",
+      "fieldtype": "Select",
+      "label": "Source",
+      "options": "message\nprofile",
+      "read_only": 1
+    },
+    {
+      "fieldname": "last_message_at",
+      "fieldtype": "Datetime",
+      "label": "Last Message At",
+      "read_only": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "last_sender",
+      "fieldtype": "Select",
+      "label": "Last Sender",
+      "options": "Customer\nStaff",
+      "read_only": 1
+    },
+    {
+      "fieldname": "request_key",
+      "fieldtype": "Data",
+      "label": "Request Key",
+      "hidden": 1,
+      "read_only": 1,
+      "unique": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}
