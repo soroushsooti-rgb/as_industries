@@ -2055,10 +2055,58 @@
         }),
     );
     $$("[data-form-back]").forEach((b) => (b.onclick = () => show(+b.dataset.formBack)));
-    form.onsubmit = (e) => {
+    form.onsubmit = async (e) => {
       e.preventDefault();
-      downloadBrief(t("Project brief", "شرح پروژه"), rows());
-      toast(t("Brief downloaded; not submitted.", "شرح پروژه دانلود شد؛ ارسال نشده است."));
+      if (!form.reportValidity()) return;
+
+      if (form.dataset.kind !== "repair") {
+        downloadBrief(t("Project brief", "شرح پروژه"), rows());
+        toast(t("Brief downloaded; not submitted.", "شرح پروژه دانلود شد؛ ارسال نشده است."));
+        return;
+      }
+
+      const button = form.querySelector('[type="submit"]');
+      if (button) button.disabled = true;
+
+      try {
+        // Extract all inputs safely
+        const payload = {};
+        if (form) {
+          form.querySelectorAll("input, select, textarea").forEach((el) => {
+            const key = el.name || el.id || el.getAttribute("data-field");
+            if (key && el.value !== undefined) {
+              payload[key] = el.value.trim();
+            }
+          });
+        }
+        const csrfToken = (window.frappe && frappe.csrf_token) || (document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : "");
+        const response = await fetch(
+          "/api/method/as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Frappe-CSRF-Token": csrfToken
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(payload),
+          },
+        );
+        const data = await response.json();
+
+        if (!response.ok || !data.message?.success) {
+          throw new Error(
+            data.message?.message ||
+              t("Could not submit the repair request.", "ثبت درخواست تعمیر ممکن نشد."),
+          );
+        }
+
+        toast(data.message.message);
+      } catch (error) {
+        toast(error.message || t("Submission failed.", "ارسال درخواست ناموفق بود."));
+      } finally {
+        if (button) button.disabled = false;
+      }
     };
   }
   /** designPage: application feature. Keep related handlers in this module. */
