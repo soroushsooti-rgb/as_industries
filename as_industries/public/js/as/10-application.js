@@ -2055,46 +2055,42 @@
         }),
     );
     $$("[data-form-back]").forEach((b) => (b.onclick = () => show(+b.dataset.formBack)));
-    // Add download button for repair
-    if (form.dataset.kind === "repair") {
-      const formActions = form.querySelector(".form-actions") || form;
-      const downloadBtn = document.createElement("button");
-      downloadBtn.type = "button";
-      downloadBtn.className = "btn-secondary";
-      downloadBtn.style.marginRight = "10px";
-      downloadBtn.textContent = t("Download brief ↓", "دانلود شرح پروژه ↓");
-      downloadBtn.onclick = () => downloadBrief(t("Project brief", "شرح پروژه"), rows());
-      formActions.appendChild(downloadBtn);
-    }
-
     form.onsubmit = async (e) => {
       e.preventDefault();
       if (!form.reportValidity()) return;
+
+      if (form.dataset.kind !== "repair") {
+        downloadBrief(t("Project brief", "شرح پروژه"), rows());
+        toast(t("Brief downloaded; not submitted.", "شرح پروژه دانلود شد؛ ارسال نشده است."));
+        return;
+      }
 
       const button = form.querySelector('[type="submit"]');
       if (button) button.disabled = true;
 
       try {
+        // Extract all inputs safely
         const payload = {};
-        form.querySelectorAll("input, select, textarea").forEach((el) => {
-          const key = el.name || el.id || el.getAttribute("data-field");
-          if (key && el.value !== undefined) {
-            payload[key] = el.value.trim();
-          }
-        });
-
-        frappe.call({
-          method: "as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request",
-          args: { payload: payload },
-          callback: function(r) {
-            if (r.exc) {
-              toast(t("Submission failed.", "ارسال با خطا مواجه شد."));
-            } else {
-              toast(t("Submitted successfully.", "با موفقیت ثبت شد."));
+        if (form) {
+          form.querySelectorAll("input, select, textarea").forEach((el) => {
+            const key = el.name || el.id || el.getAttribute("data-field");
+            if (key && el.value !== undefined) {
+              payload[key] = el.value.trim();
             }
-          }
+          });
+        }
+        frappe.ready(function() {
+          frappe.call({
+            method: "as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request",
+            args: payload,
+            callback: function(r) {
+              console.log("Response:", r);
+            }
+          });
         });
 
+
+        toast(data.message.message);
       } catch (error) {
         toast(error.message || t("Submission failed.", "ارسال درخواست ناموفق بود."));
       } finally {
