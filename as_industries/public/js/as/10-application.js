@@ -2005,6 +2005,11 @@
         ),
         window.SHN_TEMPLATES.text(t("Back", "بازگشت")),
         window.SHN_TEMPLATES.text(t("Download brief ↓", "دانلود شرح پروژه ↓")),
+        window.SHN_TEMPLATES.text(
+          kind === "repair"
+            ? t("Submit repair request ↗", "ثبت و ارسال درخواست تعمیر ↗")
+            : t("Submit brief ↗", "ارسال شرح پروژه ↗"),
+        ),
       ])
     );
   }
@@ -2055,42 +2060,70 @@
         }),
     );
     $$("[data-form-back]").forEach((b) => (b.onclick = () => show(+b.dataset.formBack)));
+
+    const downloadButton = $("#intakeDownload"),
+      submitButton = $("#intakeSubmit");
+
+    // Only repair requests are submitted to the backend.
+    if (form.dataset.kind !== "repair" && submitButton) {
+      submitButton.hidden = true;
+    }
+
+    downloadButton?.addEventListener("click", () => {
+      if (!form.reportValidity()) return;
+
+      downloadBrief(t("Project brief", "شرح پروژه"), rows());
+      toast(t("Brief downloaded; not submitted.", "شرح پروژه دانلود شد؛ ارسال نشده است."));
+    });
+
     form.onsubmit = async (e) => {
       e.preventDefault();
       if (!form.reportValidity()) return;
 
-      if (form.dataset.kind !== "repair") {
-        downloadBrief(t("Project brief", "شرح پروژه"), rows());
-        toast(t("Brief downloaded; not submitted.", "شرح پروژه دانلود شد؛ ارسال نشده است."));
-        return;
-      }
+      if (form.dataset.kind !== "repair") return;
 
-      const button = form.querySelector('[type="submit"]');
+      const button = submitButton;
       if (button) button.disabled = true;
 
       try {
-        // Extract all inputs safely
         const payload = {};
-        if (form) {
-          form.querySelectorAll("input, select, textarea").forEach((el) => {
-            const key = el.name || el.id || el.getAttribute("data-field");
-            if (key && el.value !== undefined) {
-              payload[key] = el.value.trim();
-            }
-          });
-        }
-        frappe.ready(function() {
-          frappe.call({
-            method: "as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request",
-            args: payload,
-            callback: function(r) {
-              console.log("Response:", r);
-            }
-          });
+        form.querySelectorAll("input, select, textarea").forEach((el) => {
+          const key = el.name || el.id || el.getAttribute("data-field");
+          if (key && el.value !== undefined) {
+            payload[key] = el.value.trim();
+          }
         });
 
+        const formData = new FormData();
+        Object.keys(payload).forEach(k => {
+          if (payload[k] !== undefined && payload[k] !== null) {
+            formData.append(k, payload[k]);
+          }
+        });
 
-        toast(data.message.message);
+        const csrfToken = (typeof window !== "undefined" && window.frappe && window.frappe.csrf_token) ? window.frappe.csrf_token : "";
+        const headers = { "Accept": "application/json" };
+        if (csrfToken) {
+          headers["X-Frappe-CSRF-Token"] = csrfToken;
+        }
+
+        const res = await fetch("/api/method/as_industries.as_industries.doctype.as_manufacturing_request.as_manufacturing_request.submit_repair_request", {
+          method: "POST",
+          headers: headers,
+          body: formData
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          const errDetail = result._server_messages
+            ? JSON.parse(JSON.parse(result._server_messages)[0]).message
+            : (result.exception || t("Submission failed.", "ارسال درخواست ناموفق بود."));
+          throw new Error(errDetail);
+        }
+
+        const msg = (result.message && result.message.message) || t("Repair request submitted successfully.", "درخواست تعمیر با موفقیت ثبت شد.");
+        toast(msg);
+        form.reset();
+        show(0);
       } catch (error) {
         toast(error.message || t("Submission failed.", "ارسال درخواست ناموفق بود."));
       } finally {

@@ -3,6 +3,14 @@
 <html lang="en" dir="ltr">
   <head>{% endraw %}
 <script id="shn-integration-config" type="application/json">{{ shn_integration | safe }}</script>
+<script>
+  window.frappe = window.frappe || {};
+  window.frappe.csrf_token = {{ csrf_token | tojson }};
+  window.frappe.session = {
+    user: {{ current_user | tojson }},
+    is_guest: {{ 1 if is_guest else 0 }}
+  };
+</script>
 {% raw %}
 <script src="/assets/as_industries/js/integration-defaults.js"></script>
 <script src="/assets/as_industries/js/generated-templates.js?v=20261011.8"></script>

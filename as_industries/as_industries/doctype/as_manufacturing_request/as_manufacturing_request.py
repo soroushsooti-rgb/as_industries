@@ -5,7 +5,7 @@ from frappe.utils import validate_email_address
 class ASManufacturingRequest(Document):
     pass
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])
+@frappe.whitelist(methods=["POST"])
 def submit_repair_request(**kwargs):
     frappe.log_error(title="REPAIR_SUBMIT_PAYLOAD", message=frappe.as_json(kwargs))
     machine = (kwargs.get("machine") or "").strip()
