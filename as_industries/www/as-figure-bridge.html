@@ -13,6 +13,7 @@
  async function send() {
   if (!pending || busy || completed) return;
   busy = true;
+  let stage = "Checking account";
   try {
    const session = await window.AS_ACCOUNT.request("as_industries.account.session", undefined, "GET");
    if (!session.user) {
@@ -27,10 +28,16 @@
    clearInterval(poll); poll = null;
    status.textContent = "Saving your request… / در حال ثبت درخواست…";
    const form = new FormData();
-   for (const [key,value] of pending.fields) form.append(key,value);
+   for (const [key,value] of pending.fields) {
+    if (value && typeof value === "object" && value.bytes instanceof ArrayBuffer)
+     form.append(key,new Blob([value.bytes],{type:value.mime}),value.filename);
+    else form.append(key,value);
+   }
+   stage = "Saving figure request";
    const result = await window.AS_ACCOUNT.request("as_industries.figures.submit",form);
    if (!result?.ok || !result.name) throw Error("The server did not confirm a saved request.");
    // A separate read proves that the POST committed before reporting success.
+   stage = "Verifying saved request";
    const saved = await window.AS_ACCOUNT.request("as_industries.figures.mine",undefined,"GET");
    if (!saved.requests?.some(row => row.name === result.name)) throw Error("Could not verify the saved request. Check My Orders before sending again.");
    completed = true;
@@ -38,8 +45,8 @@
   } catch(error) {
    completed = true;
    clearInterval(poll);
-   status.textContent = error.message;
-   window.opener.postMessage({kind:"as-figure-result",id:pending.id,error:error.message},shopOrigin);
+   status.textContent = stage + ": " + error.message;
+   window.opener.postMessage({kind:"as-figure-result",id:pending.id,error:status.textContent},shopOrigin);
   } finally { busy = false; }
  }
  window.addEventListener("message",event => {
