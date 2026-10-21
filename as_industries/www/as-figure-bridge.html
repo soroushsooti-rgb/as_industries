@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>AS account connection</title></head><body><p role="status">Sending your figure request… / در حال ارسال درخواست فیگور…</p><a href="/as-industries#/account?mode=password">Sign in to AS / ورود به حساب AS</a>
+<script src="/assets/as_industries/js/account.js"></script>
+<script>
+(() => {
+ const shopOrigin = {{ shop_origin | safe }};
+ if (window.opener) window.opener.postMessage({kind:"as-figure-ready"},shopOrigin);
+ window.addEventListener("message", async event => {
+  if (event.source !== window.opener || event.origin !== shopOrigin ||
+      event.data?.kind !== "as-figure-request" || event.data.action !== "submit") return;
+  const reply = {kind:"as-figure-result",id:event.data.id};
+  try {
+   const session = await window.AS_ACCOUNT.request("as_industries.account.session", undefined, "GET");
+   if (!session.user) throw Error("Sign in to your AS account in another tab, then send this form again. Your form and photo are kept.");
+   const form = new FormData();
+   for (const [key,value] of event.data.fields) form.append(key,value);
+   reply.result = await window.AS_ACCOUNT.request("as_industries.figures.submit",form);
+  } catch(error) { reply.error = error.message; }
+  window.opener.postMessage(reply, shopOrigin);
+  if (reply.error) document.querySelector("[role=status]").textContent = reply.error;
+ });
+})();
+</script></body></html>
