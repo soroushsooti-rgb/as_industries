@@ -16,7 +16,7 @@
     const data=await api(admin?"admin":"mine",{start});
     if(!container.isConnected)return;
     container.innerHTML='<h2>'+t(admin?"Family Figurine":"My figure requests",admin?"فیگور خانوادگی":"درخواست‌های فیگور من")+'</h2>'+
-     data.requests.map(row=>'<article class="profile-panel panel"><h3>'+esc(row.name)+' <span class="status-tag">'+esc(row.request_type==="family"?"Family Figurine":row.request_type)+'</span></h3>'+
+     data.requests.map(row=>'<article id="figure-'+esc(row.name)+'" class="profile-panel panel"><h3>'+esc(row.name)+' <span class="status-tag">'+esc(row.request_type==="family"?"Family Figurine":row.request_type)+'</span></h3>'+
      '<p>'+esc(row.status)+' · '+esc(row.preferred_size)+' · '+esc(row.quantity)+'</p>'+
      (admin?'<p>'+esc(row.full_name)+' · '+esc(row.contact)+'</p>':'')+
      '<p style="white-space:pre-wrap">'+esc(row.details)+'</p>'+
@@ -25,6 +25,8 @@
      (!data.requests.length?'<p>'+t("No requests yet.","هنوز درخواستی ثبت نشده است.")+'</p>':'')+
      '<button type="button" data-figure-prev '+(!start?'disabled':'')+'>'+t("Previous","قبلی")+'</button> '+
      '<button type="button" data-figure-next '+(!data.has_more?'disabled':'')+'>'+t("Next","بعدی")+'</button>';
+    const selected = new URLSearchParams(location.hash.split("?")[1] || "").get("figure");
+    if(selected) document.getElementById("figure-"+selected)?.scrollIntoView({block:"center"});
     for(const img of container.querySelectorAll("[data-figure-image]")) {
      api("image",{name:img.dataset.figureImage,admin_view:admin?1:0})
       .then(result=>{if(img.isConnected)img.src=result.image;})
@@ -41,13 +43,15 @@
   });
   load();
  }
+ function section(main,id) {
+  if(!main||main.querySelector("#"+id))return;
+  const container=document.createElement("section");
+  container.id=id;container.className="profile-panel";
+  main.append(container);mount(container);
+ }
  window.AS_FIGURES={
   mountAdmin:container=>mount(container,true),
-  mountProfile:main=>{
-   if(!main||main.querySelector("#profileFigures"))return;
-   const section=document.createElement("section");
-   section.id="profileFigures";section.className="profile-panel";
-   main.append(section);mount(section);
-  }
+  mountProfile:main=>section(main,"profileFigures"),
+  mountOrders:main=>section(main,"orderFigures")
  };
 })();

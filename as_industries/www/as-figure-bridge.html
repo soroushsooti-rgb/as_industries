@@ -1,22 +1,56 @@
-<!doctype html><html><head><meta charset="utf-8"><title>AS account connection</title></head><body><p role="status">Sending your figure request… / در حال ارسال درخواست فیگور…</p><a href="/as-industries#/account?mode=password">Sign in to AS / ورود به حساب AS</a>
-<script src="/assets/as_industries/js/account.js"></script>
+<!doctype html><html><head><meta charset="utf-8"><title>AS account connection</title></head>
+<body><p role="status">Sending your figure request… / در حال ارسال درخواست فیگور…</p>
+<a id="figureSignIn" href="/as-industries#/account?mode=password" target="_blank" rel="noopener" hidden>Sign in to AS / ورود به حساب AS</a>
+<button id="figureContinue" type="button" hidden>Continue after sign-in / ادامه پس از ورود</button>
+<script src="/assets/as_industries/js/account.js?v=20261021.2"></script>
 <script>
 (() => {
  const shopOrigin = {{ shop_origin | safe }};
- if (window.opener) window.opener.postMessage({kind:"as-figure-ready"},shopOrigin);
- window.addEventListener("message", async event => {
-  if (event.source !== window.opener || event.origin !== shopOrigin ||
-      event.data?.kind !== "as-figure-request" || event.data.action !== "submit") return;
-  const reply = {kind:"as-figure-result",id:event.data.id};
+ const status = document.querySelector("[role=status]");
+ const login = document.querySelector("#figureSignIn");
+ const resume = document.querySelector("#figureContinue");
+ let pending = null, busy = false, completed = false, poll = null;
+ async function send() {
+  if (!pending || busy || completed) return;
+  busy = true;
   try {
    const session = await window.AS_ACCOUNT.request("as_industries.account.session", undefined, "GET");
-   if (!session.user) throw Error("Sign in to your AS account in another tab, then send this form again. Your form and photo are kept.");
+   if (!session.user) {
+    const message = "Sign in using this window's link. Your request will then be sent automatically; keep the form and this window open. / وارد حساب شوید؛ سپس درخواست خودکار ارسال می‌شود. فرم و این پنجره را باز نگه دارید.";
+    status.textContent = message;
+    login.hidden = resume.hidden = false;
+    window.opener.postMessage({kind:"as-figure-pending",id:pending.id,message},shopOrigin);
+    if (!poll) poll = setInterval(send,5000);
+    return;
+   }
+   login.hidden = resume.hidden = true;
+   clearInterval(poll); poll = null;
+   status.textContent = "Saving your request… / در حال ثبت درخواست…";
    const form = new FormData();
-   for (const [key,value] of event.data.fields) form.append(key,value);
-   reply.result = await window.AS_ACCOUNT.request("as_industries.figures.submit",form);
-  } catch(error) { reply.error = error.message; }
-  window.opener.postMessage(reply, shopOrigin);
-  if (reply.error) document.querySelector("[role=status]").textContent = reply.error;
+   for (const [key,value] of pending.fields) form.append(key,value);
+   const result = await window.AS_ACCOUNT.request("as_industries.figures.submit",form);
+   if (!result?.ok || !result.name) throw Error("The server did not confirm a saved request.");
+   // A separate read proves that the POST committed before reporting success.
+   const saved = await window.AS_ACCOUNT.request("as_industries.figures.mine",undefined,"GET");
+   if (!saved.requests?.some(row => row.name === result.name)) throw Error("Could not verify the saved request. Check My Orders before sending again.");
+   completed = true;
+   window.opener.postMessage({kind:"as-figure-result",id:pending.id,result},shopOrigin);
+  } catch(error) {
+   completed = true;
+   clearInterval(poll);
+   status.textContent = error.message;
+   window.opener.postMessage({kind:"as-figure-result",id:pending.id,error:error.message},shopOrigin);
+  } finally { busy = false; }
+ }
+ window.addEventListener("message",event => {
+  if (!window.opener || event.source !== window.opener || event.origin !== shopOrigin ||
+      event.data?.kind !== "as-figure-request" || event.data.action !== "submit" || pending) return;
+  pending = event.data;
+  send();
  });
+ resume.addEventListener("click",send);
+ window.addEventListener("focus",send);
+ window.addEventListener("pagehide",() => clearInterval(poll));
+ if (window.opener) window.opener.postMessage({kind:"as-figure-ready"},shopOrigin);
 })();
 </script></body></html>
