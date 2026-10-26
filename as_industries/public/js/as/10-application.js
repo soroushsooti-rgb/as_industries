@@ -5822,24 +5822,9 @@
       window.AS_TICKETS.bindMessage(form, status);
       return;
     }
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      if (!form.reportValidity()) return;
-      try {
-        const contact = collectContact(form),
-          message = new FormData(form).get("message").trim();
-        if (!message) throw Error(t("Write your request.", "درخواستتان را بنویسید."));
-        await submitInquiry(
-          { kind, ...contact, message },
-          null,
-          status,
-          form.querySelector("[type=submit]"),
-        );
-      } catch (error) {
-        status.textContent = error.message;
-      }
-    };
+    window.AS_INQUIRIES.bind(form, status);
   }
+
   const beforeInquiryBind = bind;
   bind = function () {
     beforeInquiryBind();
@@ -6048,85 +6033,6 @@
       ]) + contactFields("quick"),
     );
   };
-  /** referencePhotoError: application feature. Keep related handlers in this module. */
-  function referencePhotoError(file) {
-    if (!file) return "";
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
-      return t("Choose a JPG, PNG or WebP image.", "یک عکس با فرمت JPG، PNG یا WebP انتخاب کنید.");
-    if (file.size > 10 * 1024 * 1024)
-      return t("The photo must be 10 MB or smaller.", "حجم عکس باید حداکثر ۱۰ مگابایت باشد.");
-    return "";
-  }
-  bindInquiryForm = function (form, status, kind) {
-    if (!form) return;
-    if (kind === "chat") {
-      window.AS_TICKETS.bindMessage(form, status);
-      return;
-    }
-    const input = form.querySelector("[name=photo]"),
-      preview = form.querySelector("#quick-photo-preview"),
-      photoStatus = form.querySelector("#quick-photo-status");
-    if (input) {
-      let photoReadVersion = 0;
-      const clearPreview = () => {
-        photoReadVersion++;
-        preview.hidden = true;
-        preview.querySelector("img").removeAttribute("src");
-      };
-      input.onchange = () => {
-        clearPreview();
-        const file = input.files?.[0],
-          error = referencePhotoError(file);
-        input.setCustomValidity(error);
-        photoStatus.textContent = error;
-        if (file && !error) {
-          const version = photoReadVersion,
-            r = new FileReader();
-          r.onload = () => {
-            if (version !== photoReadVersion) return;
-            preview.querySelector("img").src = r.result;
-            preview.hidden = false;
-            photoStatus.textContent = file.name;
-          };
-          r.onerror = () => {
-            if (version === photoReadVersion)
-              photoStatus.textContent = t(
-                "The photo could not be opened. Please choose it again.",
-                "عکس باز نشد؛ دوباره انتخابش کنید.",
-              );
-          };
-          r.readAsDataURL(file);
-        }
-      };
-      form.querySelector("#quick-photo-remove").onclick = () => {
-        input.value = "";
-        input.setCustomValidity("");
-        clearPreview();
-        photoStatus.textContent = "";
-        input.focus();
-      };
-    }
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      if (!form.reportValidity()) return;
-      try {
-        const contact = collectContact(form),
-          message = String(new FormData(form).get("message") || "").trim(),
-          file = input?.files?.[0] || null,
-          error = referencePhotoError(file);
-        if (error) throw Error(error);
-        if (!message) throw Error(t("Write your request.", "درخواستتان را بنویسید."));
-        await submitInquiry(
-          { kind, ...contact, message },
-          file,
-          status,
-          form.querySelector("[type=submit]"),
-        );
-      } catch (error) {
-        status.textContent = error.message;
-      }
-    };
-  };
   const r10Badge = ecoBasketBadge;
   ecoBasketBadge = function () {
     r10Badge();
@@ -6155,7 +6061,6 @@
     petShop,
     petDetail,
     quickContact,
-    photoError: referencePhotoError,
     bindInquiryForm,
     price: ecoPetPrice,
   };

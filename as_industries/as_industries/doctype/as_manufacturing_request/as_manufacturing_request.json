@@ -16,7 +16,10 @@
   "description",
   "location",
   "urgency",
-  "deadline"
+  "deadline",
+  "phone",
+  "messenger",
+  "reference_image"
  ],
  "fields": [
   {
@@ -89,6 +92,22 @@
    "fieldname": "deadline",
    "fieldtype": "Data",
    "label": "Deadline"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "messenger",
+   "fieldtype": "Select",
+   "label": "Messenger",
+   "options": "\nwhatsapp\nbale"
+  },
+  {
+   "fieldname": "reference_image",
+   "fieldtype": "Attach Image",
+   "label": "Reference Image"
   }
  ],
  "links": [],

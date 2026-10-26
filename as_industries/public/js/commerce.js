@@ -143,6 +143,7 @@
       if(!state.user){page.querySelector("[data-orders-body]").innerHTML='<div class="commerce-panel"><a class="button primary" href="#/account?mode=password&return='+encodeURIComponent("/orders"+(params().get("order")?"?order="+params().get("order"):""))+'">'+t("Sign in to view orders","برای مشاهده سفارش‌ها وارد شوید")+'</a></div>';return;}
       orders(page.querySelector("[data-orders-body]"));
       window.AS_FIGURES?.mountOrders(page);
+      window.AS_INQUIRIES?.mountOrders(page);
     }).catch(e=>{if(page.isConnected)page.querySelector("[data-orders-body]").textContent=error(e);});
   }
   window.AS_COMMERCE={owns:path=>["/checkout","/orders"].includes(path),mount,mountProfile,detailHTML,statusHTML,t,esc,money,date,payment,stage,error};

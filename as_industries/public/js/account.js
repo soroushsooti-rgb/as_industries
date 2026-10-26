@@ -192,7 +192,7 @@
       card.querySelector(profilePage ? ":scope > h2" : "h2").textContent = t(...(headings[mode] || headings.password));
       if (mode === "profile") {
         const u = state.user;
-        if (profilePage) { slot.innerHTML = profileDashboard(u); window.AS_COMMERCE?.mountProfile(slot.querySelector(".profile-main")); window.AS_TICKETS?.mountProfile(slot.querySelector(".profile-main")); window.AS_FIGURES?.mountProfile(slot.querySelector(".profile-main")); }
+        if (profilePage) { slot.innerHTML = profileDashboard(u); window.AS_COMMERCE?.mountProfile(slot.querySelector(".profile-main")); window.AS_TICKETS?.mountProfile(slot.querySelector(".profile-main")); window.AS_FIGURES?.mountProfile(slot.querySelector(".profile-main")); window.AS_INQUIRIES?.mountProfile(slot.querySelector(".profile-main")); }
         else {
         slot.innerHTML = '<p>' + escape(u.username || ((u.email || "").endsWith("@as-account.invalid") ? u.mobile_no : u.email)) + '</p><p>' + escape(u.mobile_no || "") + '</p>' +
           form("profile", field("first_name", "First name", "نام", "text", u.first_name || "", 'maxlength="140" autocomplete="given-name"') +
