@@ -20,9 +20,9 @@ def mine(start=0):
     return bridge("figure_mine", {"start": start})
 
 @frappe.whitelist(methods=["GET"])
-def admin(start=0):
+def admin(start=0, request_type="family"):
     require_admin()
-    return bridge("figure_admin", {"start": start})
+    return bridge("figure_admin", {"start": start, "request_type": request_type})
 
 @frappe.whitelist(methods=["GET"])
 def image(name, admin_view=0):

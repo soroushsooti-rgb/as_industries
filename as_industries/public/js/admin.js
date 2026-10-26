@@ -37,6 +37,7 @@
   const sections = {
     dashboard:[t("Dashboard","داشبورد"),"dashboard"],
     figures:[t("Family Figurine","فیگور خانوادگی"),"requests"],
+    kitchen:[t("Kitchen Requests","درخواست‌های آشپزخانه"),"requests"],
     requests:[t("Manufacturing Requests","درخواست‌های ساخت"),"requests"],
     production:[t("Production","تولید"),"production"],
     machines:[t("Machines","دستگاه‌ها"),"machines"],
@@ -236,7 +237,7 @@
       if(current==="dashboard")html=dashboardView();
       else if(current==="inventory")html=inventoryView();
       else if(["orders","payments"].includes(current))html='<section id="admin-orders-panel"></section>';
-      else if(current==="figures")html='<section id="admin-figures-panel"></section>';
+      else if(["figures","kitchen"].includes(current))html='<section id="admin-figures-panel"></section>';
       else if(current==="tickets")html='<section id="admin-tickets-panel"></section>';
       else if(current==="settings")html=settingsView();
       else if(current==="reports")html=reportsView();
@@ -247,7 +248,7 @@
         html=current==="users"?usersTable(payload):collectionView(current,payload);
       }
       view.innerHTML=html;
-      if(current==="figures")window.AS_FIGURES.mountAdmin(document.getElementById("admin-figures-panel"));
+      if(["figures","kitchen"].includes(current))window.AS_FIGURES.mountAdmin(document.getElementById("admin-figures-panel"),current==="kitchen"?"kitchen":"family");
       if(current==="tickets")window.AS_TICKETS.mountAdmin(document.getElementById("admin-tickets-panel"));
       if(current==="inventory")window.AS_INVENTORY.mount(document.getElementById("inventory-panel"),{language:boot.language,shopURL:boot.urls.shop});
       if(["orders","payments"].includes(current))window.AS_ADMIN_ORDERS.mount(document.getElementById("admin-orders-panel"),{section:current,language:boot.language,shopURL:boot.urls.shop});

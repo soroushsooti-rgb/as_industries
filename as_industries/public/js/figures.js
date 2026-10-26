@@ -1,4 +1,4 @@
-/* Customer figure requests and the Family Figurine administration section. */
+/* Customer custom requests and their category administration sections. */
 (() => {
  "use strict";
  const t=(en,fa)=>document.documentElement.lang==="fa"?fa:en;
@@ -6,17 +6,19 @@
  async function api(method,values={}) {
   return window.AS_ACCOUNT.request("as_industries.figures."+method+"?"+new URLSearchParams(values),undefined,"GET");
  }
- function mount(container,admin=false) {
+ function mount(container,admin=false,requestType="family") {
   if(!container)return;
   let start=0,busy=false;
   async function load(){
    if(busy||!container.isConnected)return;
    busy=true;
    try {
-    const data=await api(admin?"admin":"mine",{start});
+    const data=await api(admin?"admin":"mine",{start,...(admin?{request_type:requestType}:{})});
     if(!container.isConnected)return;
-    container.innerHTML='<h2>'+t(admin?"Family Figurine":"My figure requests",admin?"فیگور خانوادگی":"درخواست‌های فیگور من")+'</h2>'+
-     data.requests.map(row=>'<article id="figure-'+esc(row.name)+'" class="profile-panel panel"><h3>'+esc(row.name)+' <span class="status-tag">'+esc(row.request_type==="family"?"Family Figurine":row.request_type)+'</span></h3>'+
+    const heading = admin ? (requestType==="kitchen" ? t("Kitchen Requests","درخواست‌های آشپزخانه") : t("Family Figurine","فیگور خانوادگی")) : t("My custom requests","درخواست‌های سفارشی من");
+    container.innerHTML='<h2>'+heading+'</h2>'+
+     data.requests.map(row=>'<article id="figure-'+esc(row.name)+'" class="profile-panel panel"><h3>'+esc(row.name)+' <span class="status-tag">'+esc(row.request_type==="family"?t("Family Figurine","فیگور خانوادگی"):row.request_type==="kitchen"?t("Kitchen","آشپزخانه"):row.request_type)+'</span></h3>'+
+     (row.design_reference?'<p><strong>'+esc(row.design_reference)+'</strong></p>':'')+
      '<p>'+esc(row.status)+' · '+esc(row.preferred_size)+' · '+esc(row.quantity)+'</p>'+
      (admin?'<p>'+esc(row.full_name)+' · '+esc(row.contact)+'</p>':'')+
      '<p style="white-space:pre-wrap">'+esc(row.details)+'</p>'+
@@ -50,7 +52,7 @@
   main.append(container);mount(container);
  }
  window.AS_FIGURES={
-  mountAdmin:container=>mount(container,true),
+  mountAdmin:(container,requestType="family")=>mount(container,true,requestType),
   mountProfile:main=>section(main,"profileFigures"),
   mountOrders:main=>section(main,"orderFigures")
  };
